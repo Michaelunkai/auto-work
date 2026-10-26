@@ -1,0 +1,269 @@
+{
+  "defaults": {
+    "count": 5,
+    "min_score": 6,
+    "max_minutes": 720,
+    "max_domain_guesses": 12,
+    "max_career_pages": 8,
+    "linkedin_pages": 1,
+    "linkedin_fresh_days": 14,
+    "stale_gate_minutes": 30
+  },
+  "hard_caps": {
+    "max_count": 15
+  },
+  "rounds": [
+    [
+      "ads",
+      "ak",
+      "drushim"
+    ],
+    [
+      "ads",
+      "alljobs",
+      "drushim",
+      "recruiters"
+    ],
+    [
+      "ak",
+      "alljobs",
+      "drushim",
+      "recruiters"
+    ]
+  ],
+  "linkedin_keywords": [
+    "junior devops",
+    "devops",
+    "helpdesk",
+    "it support",
+    "system administrator",
+    "cyber junior",
+    "noc",
+    "cloud support"
+  ],
+  "wave_queries": [
+    "junior devops careers Israel email",
+    "helpdesk technician jobs Israel cv email",
+    "junior system administrator Israel careers email",
+    "cybersecurity soc junior Israel jobs email",
+    "it support jobs Israel send cv email"
+  ],
+  "posting_venue_hosts": [
+    "alljobs.co.il",
+    "jobclick.co.il",
+    "drushim.co.il",
+    "facebook.com",
+    "fb.com"
+  ],
+  "jobclick_pages": 3,
+  "drushim_pages": 3,
+  "board_scan_max": 120,
+  "fb_max": 40,
+  "fb_reader": "https://r.jina.ai/",
+  "fb_queries": [
+    "site:facebook.com/groups devops israel cv",
+    "site:facebook.com/groups helpdesk israel דרוש",
+    "site:facebook.com/groups תמיכה טכנית קורות חיים",
+    "site:facebook.com/groups it jobs israel send cv"
+  ],
+  "recruiter_probes": [
+    {
+      "name": "NETHR",
+      "url": "https://www.nethr.co.il/",
+      "title": "recruitment channel"
+    },
+    {
+      "name": "Ethosia",
+      "url": "https://www.ethosia.co.il/contact",
+      "title": "recruitment channel"
+    },
+    {
+      "name": "Jobify360",
+      "url": "https://jobify360.co.il/",
+      "title": "recruitment channel"
+    }
+  ],
+  "free_mail_domains": [
+    "gmail.com",
+    "hotmail.com",
+    "outlook.com",
+    "yahoo.com",
+    "walla.co.il",
+    "walla.com",
+    "163.com",
+    "icloud.com",
+    "proton.me",
+    "protonmail.com",
+    "live.com",
+    "msn.com",
+    "aol.com",
+    "gmx.com",
+    "yandex.com",
+    "mail.ru",
+    "example.com",
+    "test.com",
+    "email.com"
+  ],
+  "allowed_ats_domains": [
+    "zohorecruitmail.com",
+    "greenhouse.io",
+    "lever.co",
+    "smartrecruiters.com",
+    "comeet.co",
+    "comeet.com",
+    "myworkdayjobs.com"
+  ],
+  "mail_prefix_priority": [
+    "jobs",
+    "job",
+    "careers",
+    "career",
+    "cv",
+    "resume",
+    "hr",
+    "recruiting",
+    "recruitment",
+    "work",
+    "joinus",
+    "info"
+  ],
+  "tlds": [
+    ".co.il",
+    ".com",
+    ".il",
+    ".io",
+    ".net",
+    ".ai",
+    ".tech",
+    ".cloud",
+    ".dev",
+    ".app"
+  ],
+  "extra_bad_title_words": [
+    "chief",
+    "principal",
+    "head of",
+    "staff engineer",
+    "8 years",
+    "7 years",
+    "10 years",
+    "cto",
+    "vp of"
+  ],
+  "career_paths": [
+    "/careers",
+    "/jobs",
+    "/join-us",
+    "/contact",
+    "/contact-us",
+    "/about-us",
+    "/about/careers",
+    "/work-with-us",
+    "/open-positions",
+    "/vacancies",
+    "/career",
+    "/he/careers",
+    "/he/jobs",
+    "/he/contact"
+  ],
+  "blocked_mail_locals": [
+    "sales",
+    "marketing",
+    "billing",
+    "accounting",
+    "finance",
+    "legal",
+    "pr",
+    "press",
+    "media",
+    "privacy",
+    "webmaster",
+    "postmaster",
+    "abuse",
+    "admin",
+    "root",
+    "hostmaster"
+  ],
+  "job_board_patterns": [
+    "alljobs",
+    "cv example",
+    "cv-example",
+    "cvcrow",
+    "drushim",
+    "enhancv",
+    "helpusfind",
+    "job offer",
+    "job space",
+    "jobboard",
+    "jobinfo",
+    "jobmaster",
+    "jobs.ai",
+    "jobsai",
+    "jobspace",
+    "kickresume",
+    "livecareer",
+    "myperfect",
+    "novoresume",
+    "qwikresume",
+    "resumaker",
+    "resume example",
+    "resume sample",
+    "resume-genius",
+    "resume.io",
+    "resumebuilder",
+    "sendcv",
+    "tealhq",
+    "zety"
+  ],
+  "harvest_cache_minutes": 15,
+  "send_delay_seconds": 15,
+  "forever": {
+    "cooldown_minutes": 25,
+    "daily_send_cap": 100
+  },
+  "idle_pause_seconds": 120,
+  "ads_keywords": [
+    "devops",
+    "helpdesk",
+    "sysadmin",
+    "junior",
+    "noc",
+    "cloud",
+    "cyber",
+    "support",
+    "technician",
+    "linux",
+    "windows",
+    "network",
+    "security",
+    "intern",
+    "administrator",
+    "it",
+    "אבטחת מידע",
+    "תפעול",
+    "רשתות",
+    "ענן",
+    "זוטר",
+    "תמיכה טכנית",
+    "מנהל מערכות",
+    "טכנאי מחשבים",
+    "מערכות מידע"
+  ],
+  "drushim_keywords": [
+    "devops",
+    "junior",
+    "helpdesk",
+    "linux",
+    "windows",
+    "network",
+    "technician",
+    "support",
+    "cloud",
+    "תמיכה טכנית",
+    "מנהל מערכות",
+    "טכנאי מחשבים"
+  ],
+  "ads_pages": 3,
+  "ads_workers": 8,
+  "ads_max": 160
+}

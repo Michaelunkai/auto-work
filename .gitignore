@@ -1,0 +1,9 @@
+runs/*
+!runs/_vtests/
+!runs/_vtests/**
+dist/
+build/
+__pycache__/
+*.spec
+AutoWork.exe
+AutoWork.v1.*.exe
