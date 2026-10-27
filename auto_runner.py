@@ -388,6 +388,11 @@ def _extract_mailset(html, text, cap):
     for m in MAILPICK.findall(text)[:cap]:
         if not JUNK_MAIL.search(m):
             mails.append(m.lower())
+    # pages increasingly publish the mailbox only inside JSON-LD or meta blocks
+    # in the raw html, never in visible text (e.g. gotfriends schema.org email)
+    for m in MAILPICK.findall(html or '')[:cap]:
+        if not JUNK_MAIL.search(m):
+            mails.append(m.lower())
     for hx in rf.CF_RE.findall(html)[:cap]:
         dec = rf.cfdecode(hx)
         if '@' in dec:
@@ -1022,6 +1027,10 @@ def screen(row, cfg, ctx):
         reasons.append('accuracy filter v2 (3+ years mandate, management/team-lead, filled, macOS or clearance role)')
         return None, reasons
     fam, nsyn = classify_family(blob, ctx['syns'])
+    if not fam and row.get('lane') == 'recruiters':
+        # standing recruiter channels carry no job-title text, but they are
+        # application routes for every family by design (send tier 2 below)
+        fam, nsyn = 'support', 2
     if not fam:
         reasons.append('no role-family match - irrelevant for this profile')
         return None, reasons
@@ -1127,6 +1136,8 @@ def screen(row, cfg, ctx):
         score = score - 3
     # reply-probability tier: 1 official employer jobs@-style mailbox,
     # 2 standing recruiter channel, 3 open application / general mailbox.
+    if row.get('lane') == 'recruiters':
+        score = max(score, 7)
     tier = 3
     if dom not in cfg['allowed_ats_domains'] and mail.split('@')[0].startswith(('jobs', 'job', 'careers', 'career', 'hr', 'recruit', 'recruitment', 'cv', 'resume')):
         tier = 1
