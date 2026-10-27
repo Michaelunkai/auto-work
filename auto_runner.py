@@ -44,7 +44,10 @@ def tstamp():
 
 def log(msg):
     line = '[{t}] {m}'.format(t=tstamp(), m=msg)
-    print(line, flush=True)
+    try:
+        print(line, flush=True)
+    except Exception:
+        pass  # headless mode (no console): file log below is the source of truth
     if RUN['log']:
         with open(RUN['log'], 'a', encoding='utf-8') as f:
             f.write(dt.datetime.now().isoformat(timespec='seconds') + '  ' + msg + chr(10))
@@ -64,7 +67,10 @@ def red(msg):
     return chr(27) + '[91;1m' + msg + chr(27) + '[0m'
 
 def log_red(msg):
-    print(red(msg), flush=True)
+    try:
+        print(red(msg), flush=True)
+    except Exception:
+        pass  # headless mode (no console)
     if RUN['log']:
         with open(RUN['log'], 'a', encoding='utf-8') as f:
             f.write(dt.datetime.now().isoformat(timespec='seconds') + '  ' + msg + chr(10))
@@ -462,6 +468,31 @@ def lane_jobclick(out_path, cfg):
 
     return _scan_board_lanes(harvest, scan_one, 'jobclick', out_path, cfg)
 
+def _drushim_pages(data):
+    # react-query dehydratedState.queries serializes entries in mixed shapes
+    # (dict with 'state', or [queryKey, state] pair) and job order shifts;
+    # return the first pages list that actually carries job entries.
+    try:
+        queries = data['props']['pageProps']['dehydratedState']['queries']
+    except Exception:
+        return None
+    for q in queries:
+        state = None
+        if isinstance(q, dict):
+            state = q.get('state')
+        elif isinstance(q, list) and len(q) >= 2 and isinstance(q[1], dict):
+            state = q[1]
+        if isinstance(state, dict):
+            d = state.get('data')
+            if isinstance(d, dict):
+                pgs = d.get('pages')
+                if isinstance(pgs, list):
+                    for pg in pgs:
+                        if isinstance(pg, dict) and pg.get('jobs'):
+                            return pgs
+    return None
+
+
 def lane_drushim(out_path, cfg):
     # drushim.co.il Next.js search pages embed the FULL job list in
     # __NEXT_DATA__ (title, company, city, experience, scope, description,
@@ -485,7 +516,9 @@ def lane_drushim(out_path, cfg):
                 break
             try:
                 data = json.loads(m.group(1))
-                pages = data['props']['pageProps']['dehydratedState']['queries'][1]['state']['data']['pages']
+                pages = _drushim_pages(data)
+                if not pages:
+                    raise KeyError('no jobs pages in drushim payload')
             except Exception as e:
                 log('drushim payload unreadable: ' + repr(e)[:120])
                 break
@@ -605,10 +638,13 @@ def run_lane(lane, out_path, cfg, timeout=1800):
         cmd.append(out_path)
     elif lane == 'ak':
         cmd = [PY, os.path.join(CONNECTOR, 'ak.py')]
-        cmd.append(os.path.join(CONNECTOR, 'kws.txt'))
+        ak_kws = os.path.join(AW_HOME, 'ak-kws.txt')
+        if not os.path.isfile(ak_kws):
+            ak_kws = os.path.join(CONNECTOR, 'kws.txt')
+        cmd.append(ak_kws)
         cmd.append(out_path)
         cmd.append('--pages')
-        cmd.append('2')
+        cmd.append(str(cfg.get('ak_pages', 4)))
     elif lane == 'linkedin':
         cmd = [PY, os.path.join(CONNECTOR, 'li.py')]
         cmd.append(out_path)
@@ -627,6 +663,12 @@ def run_lane(lane, out_path, cfg, timeout=1800):
         return False
     log('lane start: ' + lane)
     r, out = sh(cmd, cwd=CONNECTOR, env=wp_env(), timeout=timeout)
+    if r.returncode >= 3221225472:
+        # NTSTATUS crash (0xC0000000+, e.g. 0xC0000142 DLL-init under resource
+        # pressure): transient system condition - one retry after a breather.
+        log('lane ' + lane + ' child crashed NTSTATUS ' + hex(r.returncode) + ' - one retry in 5s')
+        time.sleep(5)
+        r, out = sh(cmd, cwd=CONNECTOR, env=wp_env(), timeout=timeout)
     ok = (r.returncode == 0) and os.path.isfile(out_path)
     log('lane done: ' + lane + ' exit=' + str(r.returncode) + ' artifact=' + ('yes' if ok else 'no'))
     for l in out.splitlines()[-3:]:
@@ -1151,10 +1193,21 @@ def write_lead(cand):
     return path
 
 def screen_rows(rows, cfg, ctx, min_score):
+    # Parallel screening: each candidate does its own site/MX verification with
+    # network timeouts - a serial sweep was the throughput bottleneck.
+    import concurrent.futures
     accepted = list()
     rejected = list()
-    for row in rows:
-        cand, reasons = screen(row, cfg, ctx)
+
+    def one(row):
+        try:
+            return screen(row, cfg, ctx)
+        except Exception as e:
+            return None, ['screening error: ' + repr(e)[:120]]
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=6) as ex:
+        results = list(ex.map(one, rows))
+    for row, (cand, reasons) in zip(rows, results):
         if not cand:
             rejected.append({'company': row.get('company', ''), 'title': (row.get('title') or '')[:60], 'reasons': reasons})
             continue

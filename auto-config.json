@@ -1,13 +1,16 @@
 {
   "defaults": {
-    "count": 5,
+    "count": 10,
     "min_score": 6,
     "max_minutes": 720,
     "max_domain_guesses": 12,
     "max_career_pages": 8,
     "linkedin_pages": 1,
     "linkedin_fresh_days": 14,
-    "stale_gate_minutes": 30
+    "stale_gate_minutes": 30,
+    "ak_pages": 4,
+    "ads_pages": 4,
+    "drushim_pages": 4
   },
   "hard_caps": {
     "max_count": 15
@@ -57,7 +60,7 @@
   ],
   "jobclick_pages": 3,
   "drushim_pages": 3,
-  "board_scan_max": 120,
+  "board_scan_max": 160,
   "fb_max": 40,
   "fb_reader": "https://r.jina.ai/",
   "fb_queries": [
@@ -80,6 +83,11 @@
     {
       "name": "Jobify360",
       "url": "https://jobify360.co.il/",
+      "title": "recruitment channel"
+    },
+    {
+      "name": "GotFriends",
+      "url": "https://www.gotfriends.co.il/",
       "title": "recruitment channel"
     }
   ],
@@ -164,7 +172,10 @@
     "/career",
     "/he/careers",
     "/he/jobs",
-    "/he/contact"
+    "/he/contact",
+    "/he/open-positions",
+    "/jobs/openings",
+    "/employment"
   ],
   "blocked_mail_locals": [
     "sales",
@@ -247,7 +258,12 @@
     "תמיכה טכנית",
     "מנהל מערכות",
     "טכנאי מחשבים",
-    "מערכות מידע"
+    "מערכות מידע",
+    "docker",
+    "kubernetes",
+    "terraform",
+    "network technician",
+    "טכנאי רשתות"
   ],
   "drushim_keywords": [
     "devops",
@@ -259,11 +275,21 @@
     "technician",
     "support",
     "cloud",
+    "sysadmin",
+    "administrator",
+    "noc",
     "תמיכה טכנית",
     "מנהל מערכות",
-    "טכנאי מחשבים"
+    "טכנאי מחשבים",
+    "תפעול",
+    "אבטחת מידע",
+    "cyber",
+    "security",
+    "intern",
+    "רשתות",
+    "ענן"
   ],
   "ads_pages": 3,
   "ads_workers": 8,
-  "ads_max": 160
+  "ads_max": 200
 }
