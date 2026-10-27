@@ -639,7 +639,10 @@ def run_lane(lane, out_path, cfg, timeout=1800):
     if lane == 'recruiters':
         return lane_recruiters(out_path, cfg)
     if lane == 'alljobs':
-        cmd = [PY, os.path.join(CONNECTOR, 'allexp.py')]
+        ax = os.path.join(AW_HOME, 'allexp_local.py')
+        if not os.path.isfile(ax):
+            ax = os.path.join(CONNECTOR, 'allexp.py')
+        cmd = [PY, ax]
         cmd.append(out_path)
     elif lane == 'ak':
         cmd = [PY, os.path.join(CONNECTOR, 'ak.py')]
