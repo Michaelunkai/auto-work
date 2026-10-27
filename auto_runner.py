@@ -1076,6 +1076,14 @@ def make_ctx(cfg):
     ctx['syns'] = load_synonyms()
     ctx['pats'] = pats
     ctx['site_cache'] = dict()
+    # browser-resolved official sites for Hebrew-named employers (verified by
+    # sitemap_builder.py fail-closed token rule); forever batches re-read this
+    # map every cycle, so enrichment needs no campaign recycle
+    try:
+        with open(os.path.join(AW_HOME, 'runs', 'site-map.json'), encoding='utf-8') as f:
+            ctx['site_cache'].update(json.load(f))
+    except Exception:
+        pass
     ctx['emp_cache'] = dict()
     ctx['seen_domains'] = set()
     ctx['bounce_addrs'], ctx['bounce_doms'] = load_bounces()
