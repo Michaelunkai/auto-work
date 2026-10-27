@@ -968,6 +968,87 @@ def classify_family(blob, syns):
             best, bestn = fam, n
     return best, bestn
 
+BOUNCE_INDEX = os.path.join(AW_HOME, 'runs', 'bounce-index.txt')
+
+
+def load_bounces():
+    addrs, doms = set(), set()
+    try:
+        with open(BOUNCE_INDEX, encoding='utf-8') as f:
+            for line in f:
+                line = line.strip().lower()
+                if not line or line.startswith('#'):
+                    continue
+                if line.startswith('@'):
+                    doms.add(line[1:])
+                elif '@' in line:
+                    addrs.add(line)
+    except Exception:
+        pass
+    return addrs, doms
+
+
+def record_bounce(entry, why):
+    entry = entry.strip().lower()
+    if not entry:
+        return False
+    try:
+        cur = set()
+        with open(BOUNCE_INDEX, encoding='utf-8') as f:
+            cur = {l.strip().lower() for l in f if l.strip() and not l.startswith('#')}
+        if entry in cur:
+            return False
+        with open(BOUNCE_INDEX, 'a', encoding='utf-8') as f:
+            f.write(entry + '  # ' + why + chr(10))
+        return True
+    except Exception:
+        return False
+
+
+def sweep_bounces():
+    # Zero-bounce doctrine: any delivery-failure notice ever seen for an address
+    # excludes that address AND its whole domain from all future sends.
+    import re as _re
+    found_new = []
+    addrs, doms = load_bounces()
+    queries = ['from:mailer-daemon newer_than:3d', 'subject:"delivery status notification" newer_than:3d',
+               'subject:"delivery incomplete" newer_than:3d', 'subject:"returned mail" newer_than:3d']
+    for q in queries:
+        try:
+            res = gmail_query(q)
+        except Exception:
+            continue
+        for m in res:
+            blob = str(m.get('subject', '')) + ' ' + str(m.get('messageText', m.get('preview', '')))
+            for addr in _re.findall(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}', blob):
+                if any(d in addr for d in ('mailer-daemon', 'gmail.com')) and 'mailer-daemon' in addr:
+                    continue
+                if addr.lower() in ('mailer-daemon@googlemail.com',):
+                    continue
+                dom = addr.split('@')[1]
+                if dom in ('gmail.com', 'googlemail.com', 'google.com'):
+                    continue
+                if addr not in addrs:
+                    if record_bounce(addr, 'dsn ' + q.split()[0].replace('subject:', '')):
+                        addrs.add(addr)
+                        found_new.append(addr)
+    if found_new:
+        log_red('BOUNCE SWEEP excluded ' + str(len(found_new)) + ' address(es): ' + ', '.join(found_new[:10]))
+        try:
+            notify_self('[AutoWork] Bounce sweep: ' + str(len(found_new)) + ' new exclusion(s)',
+                        'Delivery failures detected and permanently excluded from future sends:' + chr(10) + chr(10).join(found_new[:30]))
+        except Exception:
+            pass
+    return found_new
+
+
+def gmail_query(q):
+    sys.path.insert(0, CONNECTOR)
+    from gmail_client import gmail as _gmail
+    res = _gmail([{'tool_slug': 'GMAIL_FETCH_EMAILS', 'arguments': {'query': q, 'max_results': 25, 'include_payload': True}}])
+    return (res[0].get('response', {}).get('data') or {}).get('messages', [])
+
+
 def make_ctx(cfg):
     idx = dict()
     try:
@@ -997,6 +1078,7 @@ def make_ctx(cfg):
     ctx['site_cache'] = dict()
     ctx['emp_cache'] = dict()
     ctx['seen_domains'] = set()
+    ctx['bounce_addrs'], ctx['bounce_doms'] = load_bounces()
     return ctx
 
 def screen(row, cfg, ctx):
@@ -1092,6 +1174,9 @@ def screen(row, cfg, ctx):
         return None, reasons
     if mail in ctx['exc']:
         reasons.append('exact address in exclusion set')
+        return None, reasons
+    if mail in ctx.get('bounce_addrs', set()) or dom in ctx.get('bounce_doms', set()):
+        reasons.append('delivery previously failed for this address or domain - never retried')
         return None, reasons
     if dom not in cfg['allowed_ats_domains']:
         sd = site_domain(site) if site else ''
@@ -1340,6 +1425,10 @@ def cmd_run(a):
     RUN['run_id'] = m.group(1)
     RUN['invocation'] = m.group(2)
     log('prepare-run OK: run_id=' + RUN['run_id'] + ' invocation=' + RUN['invocation'])
+    try:
+        sweep_bounces()
+    except Exception as e:
+        log('bounce sweep skipped: ' + repr(e)[:120])
     try:
         rnd = 0
         idle = 0
