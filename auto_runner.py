@@ -1134,6 +1134,12 @@ def refresh_ctx(ctx):
         except Exception:
             pass
     ctx['bounce_addrs'], ctx['bounce_doms'] = load_bounces()
+    # role-family synonyms (role_map.json) re-read per round so classifier
+    # improvements apply live like every other enrichment — no recycle needed
+    try:
+        ctx['syns'] = load_synonyms()
+    except Exception:
+        pass
 
 def screen(row, cfg, ctx):
     reasons = list()
