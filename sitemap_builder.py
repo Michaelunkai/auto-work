@@ -15,12 +15,15 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import auto_runner as ar
 
-SKIP_HOSTS = re.compile(r'(drushim\.co\.il|alljobs\.co\.il|jobmaster\.co\.il|jobclick\.co\.il|checkid\.co\.il|dunsguide\.co\.il|d\.co\.il|wikipedia\.org|google\.|facebook\.com|linkedin\.com|ksp\.co\.il|dugit\.co\.il|saf\.co\.il|shesek\.co\.il)', re.I)
+SKIP_HOSTS = re.compile(r'(drushim\.co\.il|alljobs\.co\.il|jobmaster\.co\.il|jobclick\.co\.il|checkid\.co\.il|dunsguide\.co\.il|(?<![a-z0-9])d\.co\.il|wikipedia\.org|google\.|facebook\.com|linkedin\.com|ksp\.co\.il|dugit\.co\.il|saf\.co\.il|shesek\.co\.il)', re.I)
 HEB_STOP = {'בעמ', 'בע"מ', 'בע״מ', 'רואה', 'חשבון', 'קבוצת', 'חברת', 'טכנולוגיות', 'מערכות', 'תעשיות', 'בית', 'השקעות', 'לישראל', 'ישראל'}
 
 
 def name_tokens(name):
     toks = []
+    # scraped Hebrew names often carry invisible direction marks (\u200f etc)
+    # which would poison every token comparison - strip before splitting
+    name = re.sub(r'[\u200e\u200f\u202a-\u202e\u2066-\u2069]', '', name)
     for t in re.split(r'[\s/\-()&,.]+', name):
         t = t.strip('"\'״')
         if len(t) < 2:
