@@ -976,8 +976,10 @@ def load_bounces():
     try:
         with open(BOUNCE_INDEX, encoding='utf-8') as f:
             for line in f:
-                line = line.strip().lower()
-                if not line or line.startswith('#'):
+                # strip trailing "  # why" comments BEFORE matching, else the
+                # stored entry never equals a bare address and exclusions are inert
+                line = line.split('#', 1)[0].strip().lower()
+                if not line:
                     continue
                 if line.startswith('@'):
                     doms.add(line[1:])
@@ -996,7 +998,7 @@ def record_bounce(entry, why):
         cur = set()
         if os.path.isfile(BOUNCE_INDEX):
             with open(BOUNCE_INDEX, encoding='utf-8') as f:
-                cur = {l.strip().lower() for l in f if l.strip() and not l.startswith('#')}
+                cur = {l.split('#', 1)[0].strip().lower() for l in f if l.split('#', 1)[0].strip()}
         if entry in cur:
             return False
         with open(BOUNCE_INDEX, 'a', encoding='utf-8') as f:
