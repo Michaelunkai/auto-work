@@ -38,8 +38,16 @@ def listings():
 
 def main():
     outp = sys.argv[1]
+    # Wall-clock budget: under AllJobs rate-limiting every fetch burns its
+    # full 20s timeout and the whole sweep (20kw x 4pg + 2pos x 6pg + ads)
+    # can stretch past 30 minutes, starving the campaign round. Partial
+    # results are written and the next harvest continues fresh.
+    import time
+    deadline = time.monotonic() + 60 * float(os.environ.get("ALLEX_BUDGET_MIN", "6"))
     ads, seen = [], set()
     for u in listings():
+        if time.monotonic() > deadline:
+            break
         try:
             _, _, html = get(u, timeout=20)
         except Exception:  # noqa: BLE001
@@ -53,6 +61,8 @@ def main():
     print(json.dumps({"relevant_ads": len(ads)}, ensure_ascii=False))
     emps, cseen = {}, set()
     for a in ads:
+        if time.monotonic() > deadline:
+            break
         full = "https://www.alljobs.co.il" + a["url"]
         try:
             _, _, html = get(full, timeout=20)
