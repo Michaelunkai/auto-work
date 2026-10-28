@@ -1095,8 +1095,8 @@ def make_ctx(cfg):
     ctx['pats'] = pats
     ctx['site_cache'] = dict()
     # browser-resolved official sites for Hebrew-named employers (verified by
-    # sitemap_builder.py fail-closed token rule); forever batches re-read this
-    # map every cycle, so enrichment needs no campaign recycle
+    # sitemap_builder.py fail-closed token rule); refresh_ctx re-reads this map
+    # every round so enrichment applies without a campaign recycle
     try:
         with open(os.path.join(AW_HOME, 'runs', 'site-map.json'), encoding='utf-8') as f:
             ctx['site_cache'].update(json.load(f))
@@ -1106,6 +1106,34 @@ def make_ctx(cfg):
     ctx['seen_domains'] = set()
     ctx['bounce_addrs'], ctx['bounce_doms'] = load_bounces()
     return ctx
+
+def refresh_ctx(ctx):
+    # The guard campaign is one long-lived process cycling rounds, so anything
+    # another process enriches mid-run (site-map batches, bounce index from DSN
+    # sweeps, contacted/exclusion indexes from concurrent /work sends) must be
+    # re-read per round or the campaign screens against stale data.
+    try:
+        with open(os.path.join(AW_HOME, 'runs', 'site-map.json'), encoding='utf-8') as f:
+            ctx['site_cache'].update(json.load(f))
+    except Exception:
+        pass
+    try:
+        with open(os.path.join(CONNECTOR, 'contacted-index.json'), encoding='utf-8') as f:
+            ctx['idx'] = json.load(f).get('domains', dict())
+    except Exception:
+        pass
+    exc = set()
+    exc_path = os.path.join(CONNECTOR, 'exclusion-set-current.txt')
+    if os.path.isfile(exc_path):
+        try:
+            with open(exc_path, encoding='utf-8') as f:
+                for l in f:
+                    if l.strip():
+                        exc.add(l.strip().lower())
+            ctx['exc'] = exc
+        except Exception:
+            pass
+    ctx['bounce_addrs'], ctx['bounce_doms'] = load_bounces()
 
 def screen(row, cfg, ctx):
     reasons = list()
@@ -1465,6 +1493,7 @@ def cmd_run(a):
             rnd = rnd + 1
             lane_list = cfg['rounds'][(rnd - 1) % len(cfg['rounds'])]
             log('discovery round ' + str(rnd) + ': lanes=' + ','.join(lane_list))
+            refresh_ctx(ctx)
             if rnd % 5 == 0:
                 try:
                     sweep_bounces()
