@@ -994,8 +994,9 @@ def record_bounce(entry, why):
         return False
     try:
         cur = set()
-        with open(BOUNCE_INDEX, encoding='utf-8') as f:
-            cur = {l.strip().lower() for l in f if l.strip() and not l.startswith('#')}
+        if os.path.isfile(BOUNCE_INDEX):
+            with open(BOUNCE_INDEX, encoding='utf-8') as f:
+                cur = {l.strip().lower() for l in f if l.strip() and not l.startswith('#')}
         if entry in cur:
             return False
         with open(BOUNCE_INDEX, 'a', encoding='utf-8') as f:
@@ -1011,8 +1012,9 @@ def sweep_bounces():
     import re as _re
     found_new = []
     addrs, doms = load_bounces()
-    queries = ['from:mailer-daemon newer_than:3d', 'subject:"delivery status notification" newer_than:3d',
-               'subject:"delivery incomplete" newer_than:3d', 'subject:"returned mail" newer_than:3d']
+    queries = ['from:mailer-daemon newer_than:7d', 'subject:"delivery status notification" newer_than:7d',
+               'subject:"delivery incomplete" newer_than:7d', 'subject:"returned mail" newer_than:7d',
+               'from:postmaster newer_than:7d']
     for q in queries:
         try:
             res = gmail_query(q)
@@ -1043,10 +1045,24 @@ def sweep_bounces():
 
 
 def gmail_query(q):
+    # Connector caps full payloads around 10 results: larger max_results come
+    # back as a truncated 'data_preview' with NO 'data', which used to parse as
+    # an empty message list and silently blinded the bounce sweep.
     sys.path.insert(0, CONNECTOR)
     from gmail_client import gmail as _gmail
-    res = _gmail([{'tool_slug': 'GMAIL_FETCH_EMAILS', 'arguments': {'query': q, 'max_results': 25, 'include_payload': True}}])
-    return (res[0].get('response', {}).get('data') or {}).get('messages', [])
+    resp = {}
+    for _attempt in (0, 1):
+        res = _gmail([{'tool_slug': 'GMAIL_FETCH_EMAILS', 'arguments': {'query': q, 'max_results': 10, 'include_payload': True}}])
+        resp = res[0].get('response', {}) if isinstance(res, list) and res else {}
+        data = resp.get('data')
+        if data is not None:
+            return data.get('messages', [])
+    prev = resp.get('data_preview')
+    if prev:
+        # Degraded mode: hand the raw preview text to the caller; the sweep
+        # regexes addresses straight out of it, so coverage survives truncation.
+        return [{'subject': '', 'messageText': str(prev)}]
+    raise RuntimeError('gmail_query: response has neither data nor data_preview')
 
 
 def make_ctx(cfg):
@@ -1436,7 +1452,7 @@ def cmd_run(a):
     try:
         sweep_bounces()
     except Exception as e:
-        log('bounce sweep skipped: ' + repr(e)[:120])
+        log_red('bounce sweep failed at invocation start: ' + repr(e)[:120])
     try:
         rnd = 0
         idle = 0
@@ -1447,6 +1463,11 @@ def cmd_run(a):
             rnd = rnd + 1
             lane_list = cfg['rounds'][(rnd - 1) % len(cfg['rounds'])]
             log('discovery round ' + str(rnd) + ': lanes=' + ','.join(lane_list))
+            if rnd % 5 == 0:
+                try:
+                    sweep_bounces()
+                except Exception as e:
+                    log_red('bounce sweep failed (round ' + str(rnd) + '): ' + repr(e)[:120])
             rows = gather_rows(cfg, lane_list, rnd)
             accepted, rejected = screen_rows(rows, cfg, ctx, min_score)
             log('round ' + str(rnd) + ': ' + str(len(rows)) + ' raw rows, ' + str(len(rejected)) + ' rejected, ' + str(len(accepted)) + ' accepted')
