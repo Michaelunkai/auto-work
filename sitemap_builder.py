@@ -46,7 +46,7 @@ def verify(name, urls):
             continue
         if not html:
             continue
-        text = ar.textify(html)[:12000].lower()
+        text = ar.textify(html)[:60000].lower()
         hits = sum(1 for t in toks if t.lower() in text)
         if hits >= max(1, len(toks) - 1):
             return (final or u).split('?')[0].rstrip('/')
