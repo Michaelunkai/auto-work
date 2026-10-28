@@ -74,6 +74,9 @@ def main():
         while proc.poll() is None:
             time.sleep(30)
             if os.path.isfile(os.path.join(RUNS, 'guard.stop')):
+                # Tree-kill while the launcher is alive: proc.kill() alone
+                # orphans the onefile app child, which keeps running rounds.
+                subprocess.run(['taskkill', '/F', '/T', '/PID', str(proc.pid)], capture_output=True)
                 proc.kill()
                 glog('guard.stop seen - campaign killed, guard exiting')
                 release_gate()
@@ -81,12 +84,13 @@ def main():
             idle_min = (time.time() - max(newest_log_mtime(), start)) / 60.0
             if idle_min > STALE_MIN:
                 glog('campaign HUNG (no log line for ' + str(int(idle_min)) + ' min) - killing for restart')
+                # Same rule: tree-kill FIRST - taskkill /T on an already-dead
+                # launcher pid finds no children (orphan seen live on 10-28).
+                subprocess.run(['taskkill', '/F', '/T', '/PID', str(proc.pid)], capture_output=True)
                 try:
                     proc.kill()
                 except Exception:
                     pass
-                time.sleep(5)
-                subprocess.run(['taskkill', '/F', '/T', '/PID', str(proc.pid)], capture_output=True)
                 break
         code = proc.returncode
         stable_min = (time.time() - start) / 60.0
