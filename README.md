@@ -104,3 +104,33 @@ Gmail connector, validate_lead.py, ledgers, and the completion-gate plugin.
 - b25 mapped (+7, map 307->314): Metalpress (publishes info@), solaredge,
   iDigital, IBI בית השקעות, TrustNet, worki, RE-Invest — mailbox yield TBD by
   live rounds (site scan + AllJobs dossier fallback).
+
+## Send-path incidents (2026-10-29 12:12-13:15 — recovery playbook)
+
+- **Vanishing schtasks**: both `AutoWorkGuard` and `AutoWork-Watchdog` were found
+  DELETED from Task Scheduler (cause unknown; campaign had been running as an
+  orphaned process since 06:20). Recreation that works from Git Bash (plain
+  `schtasks /Create` dies on /TR quoting): PowerShell
+  `Register-ScheduledTask` — guard: `pythonw.exe <aw>\guard.py`, trigger Once
+  (manual-run task, started via `Start-ScheduledTask`); watchdog: `powershell.exe
+  -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File <aw>\watchdog.ps1`,
+  trigger Once + RepetitionInterval 5 min, duration 3650 days.
+- **Queue-fail residue cascade**: a sender exit-1 mid-queue (mid-flight
+  interruption, e.g. child killed with 0x40010004) strands recipients.txt +
+  override + partial journal state; every retry of that address then
+  self-rejects as `exact_address_already_seen` (the checker sees its own
+  residue). Recovery per incident: verify never-twice evidence (live Gmail
+  `to:` = 0, no manifest `dry_runs` record, `--cancel-connector` if a journal
+  reservation exists — it refuses when there is none), then remove the
+  recipients.txt line and the single override key with a config backup.
+  Residue examples this day: zev@esy.com, resumes@aro.net.
+- **allexp `director` substring bug** (fixed, commit-pending): bare `director`
+  matched "Active **Director**y" inside job requirements and rejected a perfect
+  junior IT-technician lead (Metalpress). Fix: `\bdirector\b` — same class as
+  the earlier `\bVP\b` fix, proven both directions. `reg` remains bare by
+  audited decision. Classifier edits need a guard recycle to take effect
+  (allexp.py is imported from disk at process start).
+- **role_map support synonyms** (hot-reloaded, no recycle needed): added
+  "technical service" + "service specialist" so SolarEdge-style
+  "Technical Service Specialist - Tier 1" rows classify as support (proven:
+  customer-service/sales rows still classify to nothing).
