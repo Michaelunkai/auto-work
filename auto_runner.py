@@ -1087,7 +1087,9 @@ def make_ctx(cfg):
     pats['good'] = allexp.GOOD
     extra = cfg.get('extra_bad_title_words', list())
     if extra:
-        pats['bad_extra'] = re.compile('|'.join(re.escape(w) for w in extra), re.I)
+        # whole-word match only: bare 'cto' substring-hit "Dire-cto-ry" inside
+        # Active Directory requirements and rejected a perfect IT-technician lead
+        pats['bad_extra'] = re.compile('|'.join(r'\b' + re.escape(w) + r'\b' for w in extra), re.I)
     ctx = dict()
     ctx['idx'] = idx
     ctx['exc'] = exc

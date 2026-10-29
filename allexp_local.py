@@ -12,7 +12,7 @@ import os, sys
 sys.path.insert(0, os.environ.get('AUTOWORK_CONNECTOR', 'F:/backup/ai/work-skill/connector'))
 from rf import get
 
-BAD = re.compile(r"(senior|מנוס|ראש צוות|team lead|manager|מנהל|VP|director|architect|ארכיטקט|סמנכ|reg|Legal|marketing|שיווק|sales|מכירות|finance|כספים|accountant|הנהלת|ספורט)", re.I)
+BAD = re.compile(r"(senior|מנוס|ראש צוות|team lead|manager|מנהל|\bVP\b|\bdirector\b|architect|ארכיטקט|סמנכ|reg|Legal|marketing|שיווק|sales|מכירות|finance|כספים|accountant|הנהלת|ספורט)", re.I)
 GOOD = re.compile(r"(devops|help ?desk|תומכ|תמיכה|טכני|sysadmin|מערכות|network|רשת|noc|תפעול|support|IT|infrastructure|תשתיות|cloud|ענן|cyber|אבטח|security|פנטרסט|implementation|הטמעה|field|שטח|technician|computer|מחשבים|student|סטודנט|junior|זוטר|ג'וניור)", re.I)
 NAV = re.compile(r"(VIP|הרשמה|שאלות|ליווי|הכוון|מדריך|כתיבת|בדיקת|שכר|מכתב|איך|פני|תנאי|מדיניות|סוכן|לכל|כתיבה)", re.I)
 JOBLINK = re.compile(r'href="(/Search/UploadSingle\.aspx\?JobID=\d+)"[^>]*>(.*?)</a>', re.S)
