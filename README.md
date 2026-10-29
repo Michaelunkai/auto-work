@@ -88,3 +88,19 @@ match (devops, cloud, cyber, sysadmin, support) with score ≥ 6.
 
 Built on the proven /work stack (`F:\backup\ai\work-skill`): work_pipeline.py,
 Gmail connector, validate_lead.py, ledgers, and the completion-gate plugin.
+
+## Documented dead ends (verified 2026-10-29 — do not re-probe)
+
+- **TAU (אוניברסיטת תל אביב, tau.ac.il)** — form-only employer: zero published
+  hiring mailbox on www.tau.ac.il, career.tau.ac.il (new-job-lobby), the
+  /positions portal, or individual posting pages (/JB-*/position/*). Rows reach
+  mailbox discovery and fail-closed ("no acceptable mailbox") — correct behavior;
+  the mapping is kept only so the verdict is explicit. The live IT-coordinator
+  titles cannot be reached by email.
+- menora (both domain variants fail), yad2, BGU/Reichman (JS portals), and the
+  JS shells (rafael/cellcom/partner/pelephone/malam/ituran) — rejections stand.
+- b25 verify-fails (kept in `_cache/unmapped-names.json` residue): log-on,
+  MissRuth, בוט נט, איחוד הצלה (403/timeout/SSL even for the runner's fetcher).
+- b25 mapped (+7, map 307->314): Metalpress (publishes info@), solaredge,
+  iDigital, IBI בית השקעות, TrustNet, worki, RE-Invest — mailbox yield TBD by
+  live rounds (site scan + AllJobs dossier fallback).
