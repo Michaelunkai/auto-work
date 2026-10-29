@@ -74,6 +74,17 @@ match (devops, cloud, cyber, sysadmin, support) with score ≥ 6.
 - Config: `auto-config.json` (caps: 15/run, 100/day; caches 15 min; send delay 15 s).
 - Evidence per run: `runs\auto-<ts>\` (log, per-round lane snapshots, rejected reasons,
   `summary.json` with every send verdict, finalize receipt).
+- Recycle procedure (config edits): BEFORE `touch runs\guard.stop`, verify the send queue
+  is empty in BOTH sender copies — the exe resolves PROJECT to
+  `F:\study\...\windows\job-application-email-sender` (while a manual `selftest.py` run
+  from the work-skill connector reads `F:\backup\ai\work-skill\project\...`):
+  `recipients.txt` must be blank in both, or the stranded queue trips every restart's
+  selftest (`FAIL queue-empty`) and the guard's fail-streak backoff escalates
+  (20s→60s→180s→600s→1800s). A killed run can also leave the paired
+  `recipient_overrides` entry in that copy's `config.json`; verify never-twice evidence
+  (manifest `sent:true` + live Gmail `to:` query) before removing it. Stray `lead-*.json`
+  files in the connector dir are pre-send artifacts and are safe to archive.
+  (Incident 2026-10-29 05:03-05:33, 30 min downtime, root cause exactly this.)
 
 Built on the proven /work stack (`F:\backup\ai\work-skill`): work_pipeline.py,
 Gmail connector, validate_lead.py, ledgers, and the completion-gate plugin.
